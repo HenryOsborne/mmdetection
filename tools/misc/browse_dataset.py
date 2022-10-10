@@ -25,7 +25,7 @@ def parse_args():
         help='skip some useless pipeline')
     parser.add_argument(
         '--output-dir',
-        default=None,
+        default='work_dirs/tmp/faster_convnext_abfn_xview/out2',
         type=str,
         help='If there is no display interface, you can save it')
     parser.add_argument('--not-show', default=False, action='store_true')
@@ -39,17 +39,16 @@ def parse_args():
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     args = parser.parse_args()
     return args
 
 
 def retrieve_data_cfg(config_path, skip_type, cfg_options):
-
     def skip_pipeline_steps(config):
         config['pipeline'] = [
             x for x in config.pipeline if x['type'] not in skip_type
@@ -67,7 +66,7 @@ def retrieve_data_cfg(config_path, skip_type, cfg_options):
         cfg.merge_from_dict(cfg_options)
     train_data_cfg = cfg.data.train
     while 'dataset' in train_data_cfg and train_data_cfg[
-            'type'] != 'MultiImageMixDataset':
+        'type'] != 'MultiImageMixDataset':
         train_data_cfg = train_data_cfg['dataset']
 
     if isinstance(train_data_cfg, Sequence):
@@ -86,7 +85,10 @@ def main():
         cfg.data.train.pipeline = [
             p for p in cfg.data.train.pipeline if p['type'] != 'SegRescale'
         ]
-    dataset = build_dataset(cfg.data.train)
+    # ==============================================================================
+    cfg.data.val.pipeline = cfg.data.train.pipeline
+    # ==============================================================================
+    dataset = build_dataset(cfg.data.val)
 
     progress_bar = mmcv.ProgressBar(len(dataset))
 
@@ -123,7 +125,7 @@ def main():
             gt_labels,
             gt_masks,
             class_names=dataset.CLASSES,
-            show=not args.not_show,
+            show=False,
             wait_time=args.show_interval,
             out_file=filename,
             bbox_color=dataset.PALETTE,

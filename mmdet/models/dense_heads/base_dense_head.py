@@ -83,10 +83,21 @@ class BaseDenseHead(BaseModule, metaclass=ABCMeta):
         num_levels = len(cls_scores)
 
         featmap_sizes = [cls_scores[i].shape[-2:] for i in range(num_levels)]
-        mlvl_priors = self.prior_generator.grid_priors(
-            featmap_sizes,
-            dtype=cls_scores[0].dtype,
-            device=cls_scores[0].device)
+        # =============================================================
+        if isinstance(self.prior_generator, list):
+            mlvl_priors = []
+            for i in range(len(self.prior_generator)):
+                prior = self.prior_generator[i].grid_priors(
+                    [featmap_sizes[i]],
+                    dtype=cls_scores[0].dtype,
+                    device=cls_scores[0].device)
+                mlvl_priors.append(prior[0])
+        else:
+            mlvl_priors = self.prior_generator.grid_priors(
+                featmap_sizes,
+                dtype=cls_scores[0].dtype,
+                device=cls_scores[0].device)
+        # =============================================================
 
         result_list = []
 
@@ -473,18 +484,18 @@ class BaseDenseHead(BaseModule, metaclass=ABCMeta):
 
                 batch_inds = torch.arange(
                     batch_size, device=bbox_pred.device).view(
-                        -1, 1).expand_as(topk_inds).long()
+                    -1, 1).expand_as(topk_inds).long()
                 # Avoid onnx2tensorrt issue in https://github.com/NVIDIA/TensorRT/issues/1134 # noqa: E501
                 transformed_inds = bbox_pred.shape[1] * batch_inds + topk_inds
                 priors = priors.reshape(
                     -1, priors.size(-1))[transformed_inds, :].reshape(
-                        batch_size, -1, priors.size(-1))
+                    batch_size, -1, priors.size(-1))
                 bbox_pred = bbox_pred.reshape(-1,
                                               4)[transformed_inds, :].reshape(
-                                                  batch_size, -1, 4)
+                    batch_size, -1, 4)
                 scores = scores.reshape(
                     -1, self.cls_out_channels)[transformed_inds, :].reshape(
-                        batch_size, -1, self.cls_out_channels)
+                    batch_size, -1, self.cls_out_channels)
                 if with_score_factors:
                     score_factors = score_factors.reshape(
                         -1, 1)[transformed_inds].reshape(batch_size, -1)

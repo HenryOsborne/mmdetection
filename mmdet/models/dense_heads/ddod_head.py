@@ -279,7 +279,7 @@ class DDODHead(AnchorHead):
         for ii, each_level_label in enumerate(labels_list):
             pos_inds = ((each_level_label >= 0) &
                         (each_level_label < bg_class_ind)).nonzero(
-                            as_tuple=False).squeeze(1)
+                as_tuple=False).squeeze(1)
             self.cls_num_pos_samples_per_level[ii] += len(pos_inds)
         # get reweight factor from 1 ~ 2 with bilinear interpolation
         min_pos_samples = min(self.cls_num_pos_samples_per_level)
@@ -526,19 +526,19 @@ class DDODHead(AnchorHead):
         """
         (all_anchors, all_labels, all_label_weights, all_bbox_targets,
          all_bbox_weights, pos_inds_list, neg_inds_list) = multi_apply(
-             self._get_target_single,
-             anchor_list,
-             valid_flag_list,
-             cls_score_list,
-             bbox_pred_list,
-             num_level_anchors_list,
-             gt_bboxes_list,
-             gt_bboxes_ignore_list,
-             gt_labels_list,
-             img_metas,
-             label_channels=label_channels,
-             unmap_outputs=unmap_outputs,
-             is_cls_assigner=True)
+            self._get_target_single,
+            anchor_list,
+            valid_flag_list,
+            cls_score_list,
+            bbox_pred_list,
+            num_level_anchors_list,
+            gt_bboxes_list,
+            gt_bboxes_ignore_list,
+            gt_labels_list,
+            img_metas,
+            label_channels=label_channels,
+            unmap_outputs=unmap_outputs,
+            is_cls_assigner=True)
         # no valid anchors
         if any([labels is None for labels in all_labels]):
             return None
@@ -599,19 +599,19 @@ class DDODHead(AnchorHead):
         """
         (all_anchors, all_labels, all_label_weights, all_bbox_targets,
          all_bbox_weights, pos_inds_list, neg_inds_list) = multi_apply(
-             self._get_target_single,
-             anchor_list,
-             valid_flag_list,
-             cls_score_list,
-             bbox_pred_list,
-             num_level_anchors_list,
-             gt_bboxes_list,
-             gt_bboxes_ignore_list,
-             gt_labels_list,
-             img_metas,
-             label_channels=label_channels,
-             unmap_outputs=unmap_outputs,
-             is_cls_assigner=False)
+            self._get_target_single,
+            anchor_list,
+            valid_flag_list,
+            cls_score_list,
+            bbox_pred_list,
+            num_level_anchors_list,
+            gt_bboxes_list,
+            gt_bboxes_ignore_list,
+            gt_labels_list,
+            img_metas,
+            label_channels=label_channels,
+            unmap_outputs=unmap_outputs,
+            is_cls_assigner=False)
         # no valid anchors
         if any([labels is None for labels in all_labels]):
             return None
@@ -692,7 +692,7 @@ class DDODHead(AnchorHead):
                                            img_meta['img_shape'][:2],
                                            self.train_cfg.allowed_border)
         if not inside_flags.any():
-            return (None, ) * 7
+            return (None,) * 7
         # assign gt and sample anchors
         anchors = flat_anchors[inside_flags, :]
 
@@ -714,7 +714,7 @@ class DDODHead(AnchorHead):
         num_valid_anchors = anchors.shape[0]
         bbox_targets = torch.zeros_like(anchors)
         bbox_weights = torch.zeros_like(anchors)
-        labels = anchors.new_full((num_valid_anchors, ),
+        labels = anchors.new_full((num_valid_anchors,),
                                   self.num_classes,
                                   dtype=torch.long)
         label_weights = anchors.new_zeros(num_valid_anchors, dtype=torch.float)

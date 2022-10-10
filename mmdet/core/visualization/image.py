@@ -301,6 +301,14 @@ def imshow_det_bboxes(img,
         num_bboxes = bboxes.shape[0]
         bbox_palette = palette_val(get_palette(bbox_color, max_label + 1))
         colors = [bbox_palette[label] for label in labels[:num_bboxes]]
+        # ==============================================================================
+        area = (bboxes[:, 3] - bboxes[:, 1]) * (bboxes[:, 2] - bboxes[:, 0])
+        mask = area > 96 * 96
+        area = area[mask]
+        bboxes = bboxes[mask]
+        if len(bboxes) == 0:
+            return
+        # ==============================================================================
         draw_bboxes(ax, bboxes, colors, alpha=0.8, thickness=thickness)
 
         horizontal_alignment = 'left'
@@ -308,16 +316,16 @@ def imshow_det_bboxes(img,
         areas = (bboxes[:, 3] - bboxes[:, 1]) * (bboxes[:, 2] - bboxes[:, 0])
         scales = _get_adaptive_scales(areas)
         scores = bboxes[:, 4] if bboxes.shape[1] == 5 else None
-        draw_labels(
-            ax,
-            labels[:num_bboxes],
-            positions,
-            scores=scores,
-            class_names=class_names,
-            color=text_colors,
-            font_size=font_size,
-            scales=scales,
-            horizontal_alignment=horizontal_alignment)
+        # draw_labels(
+        #     ax,
+        #     labels[:num_bboxes],
+        #     positions,
+        #     scores=scores,
+        #     class_names=class_names,
+        #     color=text_colors,
+        #     font_size=font_size,
+        #     scales=scales,
+        #     horizontal_alignment=horizontal_alignment)
 
     if segms is not None:
         mask_palette = get_palette(mask_color, max_label + 1)
@@ -442,7 +450,7 @@ def imshow_gt_det_bboxes(img,
     assert 'gt_bboxes' in annotation
     assert 'gt_labels' in annotation
     assert isinstance(result, (tuple, list, dict)), 'Expected ' \
-        f'tuple or list or dict, but get {type(result)}'
+                                                    f'tuple or list or dict, but get {type(result)}'
 
     gt_bboxes = annotation['gt_bboxes']
     gt_labels = annotation['gt_labels']
