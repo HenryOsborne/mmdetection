@@ -20,30 +20,29 @@ def parse_args():
         '--shape',
         type=int,
         nargs='+',
-        default=[1280, 800],
+        default=[800, 800],
         help='input image size')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     parser.add_argument(
         '--size-divisor',
         type=int,
         default=32,
         help='Pad the input image, the minimum size that is divisible '
-        'by size_divisor, -1 means do not pad the image.')
+             'by size_divisor, -1 means do not pad the image.')
     args = parser.parse_args()
     return args
 
 
 def main():
-
     args = parse_args()
 
     if len(args.shape) == 1:

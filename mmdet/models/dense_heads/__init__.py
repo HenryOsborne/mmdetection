@@ -43,6 +43,12 @@ from .yolof_head import YOLOFHead
 from .yolox_head import YOLOXHead
 from .aabo_anchor_head import AABOAnchorHead
 from .aabo_rpn_head import AABORPNHead
+from .kd_base_dense_head import LDBaseDenseHead
+from .kd_anchor_head import LDAnchorHead
+from .kd_rpn_head import LDRPNHead
+from .fgfi_rpn_head import FGFI_RPNHead
+from .fgfi_anchor_head import FGFI_AnchorHead
+from .fgfi_base_dense_head import FGFI_BaseDenseHead
 
 __all__ = [
     'AnchorFreeHead', 'AnchorHead', 'GuidedAnchorHead', 'FeatureAdaption',
@@ -58,5 +64,6 @@ __all__ = [
     'DecoupledSOLOLightHead', 'LADHead', 'TOODHead', 'MaskFormerHead',
     'Mask2FormerHead', 'SOLOV2Head', 'DDODHead',
 
-    'AABOAnchorHead', 'AABORPNHead'
+    'AABOAnchorHead', 'AABORPNHead', 'LDRPNHead', 'LDAnchorHead', 'LDBaseDenseHead',
+    'FGFI_RPNHead', 'FGFI_AnchorHead', 'FGFI_BaseDenseHead'
 ]

@@ -48,7 +48,7 @@ class StandardRoIHead(BaseRoIHead, BBoxTestMixin, MaskTestMixin):
         if self.with_mask:
             mask_rois = rois[:100]
             mask_results = self._mask_forward(x, mask_rois)
-            outs = outs + (mask_results['mask_pred'], )
+            outs = outs + (mask_results['mask_pred'],)
         return outs
 
     def forward_train(self,
@@ -266,6 +266,22 @@ class StandardRoIHead(BaseRoIHead, BBoxTestMixin, MaskTestMixin):
                 x, img_metas, det_bboxes, det_labels, rescale=rescale)
             return list(zip(bbox_results, segm_results))
 
+    def simple_test_teacher(self,
+                            x,
+                            proposal_list,
+                            img_metas,
+                            proposals=None,
+                            rescale=False):
+        assert self.with_bbox, 'Bbox head must be implemented.'
+
+        bbox_results = self.simple_test_bboxes_teacher(
+            x, img_metas, proposal_list, self.test_cfg, rescale=rescale)
+
+        if not self.with_mask:
+            return bbox_results
+        else:
+            raise NotImplementedError('没有实现实例分割的知识蒸馏')
+
     def aug_test(self, x, proposal_list, img_metas, rescale=False):
         """Test with augmentations.
 
@@ -331,7 +347,7 @@ class StandardRoIHead(BaseRoIHead, BBoxTestMixin, MaskTestMixin):
         det_bboxes = det_bboxes[..., :4]
         batch_index = torch.arange(
             det_bboxes.size(0), device=det_bboxes.device).float().view(
-                -1, 1, 1).expand(det_bboxes.size(0), det_bboxes.size(1), 1)
+            -1, 1, 1).expand(det_bboxes.size(0), det_bboxes.size(1), 1)
         mask_rois = torch.cat([batch_index, det_bboxes], dim=-1)
         mask_rois = mask_rois.view(-1, 5)
         mask_results = self._mask_forward(x, mask_rois)
@@ -372,7 +388,7 @@ class StandardRoIHead(BaseRoIHead, BBoxTestMixin, MaskTestMixin):
 
         batch_index = torch.arange(
             rois.size(0), device=rois.device).float().view(-1, 1, 1).expand(
-                rois.size(0), rois.size(1), 1)
+            rois.size(0), rois.size(1), 1)
 
         rois = torch.cat([batch_index, rois[..., :4]], dim=-1)
         batch_size = rois.shape[0]

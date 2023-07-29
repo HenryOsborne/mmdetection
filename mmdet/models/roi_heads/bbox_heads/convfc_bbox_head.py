@@ -19,20 +19,21 @@ class ConvFCBBoxHead(BBoxHead):
                                     \-> reg convs -> reg fcs -> reg
     """  # noqa: W605
 
-    def __init__(self,
-                 num_shared_convs=0,
-                 num_shared_fcs=0,
-                 num_cls_convs=0,
-                 num_cls_fcs=0,
-                 num_reg_convs=0,
-                 num_reg_fcs=0,
-                 conv_out_channels=256,
-                 fc_out_channels=1024,
-                 conv_cfg=None,
-                 norm_cfg=None,
-                 init_cfg=None,
-                 *args,
-                 **kwargs):
+    def __init__(
+            self,
+            num_shared_convs=0,
+            num_shared_fcs=0,
+            num_cls_convs=0,
+            num_cls_fcs=0,
+            num_reg_convs=0,
+            num_reg_fcs=0,
+            conv_out_channels=256,
+            fc_out_channels=1024,
+            conv_cfg=None,
+            norm_cfg=None,
+            init_cfg=None,
+            *args,
+            **kwargs):
         super(ConvFCBBoxHead, self).__init__(
             *args, init_cfg=init_cfg, **kwargs)
         assert (num_shared_convs + num_shared_fcs + num_cls_convs +
@@ -89,8 +90,7 @@ class ConvFCBBoxHead(BBoxHead):
                 in_features=self.cls_last_dim,
                 out_features=cls_channels)
         if self.with_reg:
-            out_dim_reg = (4 if self.reg_class_agnostic else 4 *
-                           self.num_classes)
+            out_dim_reg = (4 if self.reg_class_agnostic else 4 * self.num_classes)
             self.fc_reg = build_linear_layer(
                 self.reg_predictor_cfg,
                 in_features=self.reg_last_dim,
@@ -145,8 +145,7 @@ class ConvFCBBoxHead(BBoxHead):
         if num_branch_fcs > 0:
             # for shared branch, only consider self.with_avg_pool
             # for separated branches, also consider self.num_shared_fcs
-            if (is_shared
-                    or self.num_shared_fcs == 0) and not self.with_avg_pool:
+            if (is_shared or self.num_shared_fcs == 0) and not self.with_avg_pool:
                 last_layer_dim *= self.roi_feat_area
             for i in range(num_branch_fcs):
                 fc_in_channels = (

@@ -58,23 +58,25 @@ class AnchorGenerator:
         tensor([[-9., -9., 9., 9.]])]
     """
 
-    def __init__(self,
-                 strides,
-                 ratios,
-                 scales=None,
-                 base_sizes=None,
-                 scale_major=True,
-                 octave_base_scale=None,
-                 scales_per_octave=None,
-                 centers=None,
-                 center_offset=0.):
+    def __init__(
+            self,
+            strides,
+            ratios,
+            scales=None,
+            base_sizes=None,
+            scale_major=True,
+            octave_base_scale=None,
+            scales_per_octave=None,
+            centers=None,
+            center_offset=0.):
         # check center and center_offset
         if center_offset != 0:
             assert centers is None, 'center cannot be set when center_offset' \
                                     f'!=0, {centers} is given.'
         if not (0 <= center_offset <= 1):
-            raise ValueError('center_offset should be in range [0, 1], '
-                             f'{center_offset} is given.')
+            raise ValueError(
+                'center_offset should be in range [0, 1], '
+                f'{center_offset} is given.')
         if centers is not None:
             assert len(centers) == len(strides), \
                 'The number of strides should be the same as centers, got ' \
@@ -82,8 +84,9 @@ class AnchorGenerator:
 
         # calculate base sizes of anchors
         self.strides = [_pair(stride) for stride in strides]
-        self.base_sizes = [min(stride) for stride in self.strides
-                           ] if base_sizes is None else base_sizes
+        self.base_sizes = [
+            min(stride) for stride in self.strides
+        ] if base_sizes is None else base_sizes
         assert len(self.base_sizes) == len(self.strides), \
             'The number of strides should be the same as base sizes, got ' \
             f'{self.strides} and {self.base_sizes}'
@@ -97,7 +100,7 @@ class AnchorGenerator:
             self.scales = torch.Tensor(scales)
         elif octave_base_scale is not None and scales_per_octave is not None:
             octave_scales = np.array(
-                [2**(i / scales_per_octave) for i in range(scales_per_octave)])
+                [2 ** (i / scales_per_octave) for i in range(scales_per_octave)])
             scales = octave_scales * octave_base_scale
             self.scales = torch.Tensor(scales)
         else:
@@ -148,11 +151,12 @@ class AnchorGenerator:
                     center=center))
         return multi_level_base_anchors
 
-    def gen_single_level_base_anchors(self,
-                                      base_size,
-                                      scales,
-                                      ratios,
-                                      center=None):
+    def gen_single_level_base_anchors(
+            self,
+            base_size,
+            scales,
+            ratios,
+            center=None):
         """Generate base anchors of a single level.
 
         Args:
@@ -238,11 +242,12 @@ class AnchorGenerator:
             multi_level_anchors.append(anchors)
         return multi_level_anchors
 
-    def single_level_grid_priors(self,
-                                 featmap_size,
-                                 level_idx,
-                                 dtype=torch.float32,
-                                 device='cuda'):
+    def single_level_grid_priors(
+            self,
+            featmap_size,
+            level_idx,
+            dtype=torch.float32,
+            device='cuda'):
         """Generate grid anchors of a single level.
 
         Note:
@@ -280,12 +285,13 @@ class AnchorGenerator:
         # then (0, 1), (0, 2), ...
         return all_anchors
 
-    def sparse_priors(self,
-                      prior_idxs,
-                      featmap_size,
-                      level_idx,
-                      dtype=torch.float32,
-                      device='cuda'):
+    def sparse_priors(
+            self,
+            prior_idxs,
+            featmap_size,
+            level_idx,
+            dtype=torch.float32,
+            device='cuda'):
         """Generate sparse anchors according to the ``prior_idxs``.
 
         Args:
@@ -311,7 +317,7 @@ class AnchorGenerator:
         y = (prior_idxs // width //
              num_base_anchors) % height * self.strides[level_idx][1]
         priors = torch.stack([x, y, x, y], 1).to(dtype).to(device) + \
-            self.base_anchors[level_idx][base_anchor_id, :].to(device)
+                 self.base_anchors[level_idx][base_anchor_id, :].to(device)
 
         return priors
 
@@ -344,11 +350,12 @@ class AnchorGenerator:
             multi_level_anchors.append(anchors)
         return multi_level_anchors
 
-    def single_level_grid_anchors(self,
-                                  base_anchors,
-                                  featmap_size,
-                                  stride=(16, 16),
-                                  device='cuda'):
+    def single_level_grid_anchors(
+            self,
+            base_anchors,
+            featmap_size,
+            stride=(16, 16),
+            device='cuda'):
         """Generate grid anchors of a single level.
 
         Note:
@@ -489,14 +496,15 @@ class SSDAnchorGenerator(AnchorGenerator):
             same scales. It is always set to be False in SSD.
     """
 
-    def __init__(self,
-                 strides,
-                 ratios,
-                 min_sizes=None,
-                 max_sizes=None,
-                 basesize_ratio_range=(0.15, 0.9),
-                 input_size=300,
-                 scale_major=True):
+    def __init__(
+            self,
+            strides,
+            ratios,
+            min_sizes=None,
+            max_sizes=None,
+            basesize_ratio_range=(0.15, 0.9),
+            input_size=300,
+            scale_major=True):
         assert len(strides) == len(ratios)
         assert not (min_sizes is None) ^ (max_sizes is None)
         self.strides = [_pair(stride) for stride in strides]
@@ -713,12 +721,13 @@ class LegacySSDAnchorGenerator(SSDAnchorGenerator, LegacyAnchorGenerator):
     can be found in `LegacyAnchorGenerator`.
     """
 
-    def __init__(self,
-                 strides,
-                 ratios,
-                 basesize_ratio_range,
-                 input_size=300,
-                 scale_major=True):
+    def __init__(
+            self,
+            strides,
+            ratios,
+            basesize_ratio_range,
+            input_size=300,
+            scale_major=True):
         super(LegacySSDAnchorGenerator, self).__init__(
             strides=strides,
             ratios=ratios,

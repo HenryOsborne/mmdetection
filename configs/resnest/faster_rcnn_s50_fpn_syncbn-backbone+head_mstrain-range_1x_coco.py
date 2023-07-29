@@ -1,5 +1,5 @@
 _base_ = '../faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py'
-norm_cfg = dict(type='SyncBN', requires_grad=True)
+norm_cfg = dict(type='BN', requires_grad=True)
 model = dict(
     backbone=dict(
         type='ResNeSt',

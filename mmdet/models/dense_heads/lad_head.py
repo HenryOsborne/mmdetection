@@ -86,15 +86,15 @@ class LADHead(PAAHead):
 
         with torch.no_grad():
             reassign_labels, reassign_label_weight, \
-                reassign_bbox_weights, num_pos = multi_apply(
-                    self.paa_reassign,
-                    pos_losses_list,
-                    labels,
-                    labels_weight,
-                    bboxes_weight,
-                    pos_inds,
-                    pos_gt_index,
-                    anchor_list)
+            reassign_bbox_weights, num_pos = multi_apply(
+                self.paa_reassign,
+                pos_losses_list,
+                labels,
+                labels_weight,
+                bboxes_weight,
+                pos_inds,
+                pos_gt_index,
+                anchor_list)
             num_pos = sum(num_pos)
         # convert all tensor list to a flatten tensor
         labels = torch.cat(reassign_labels, 0).view(-1)

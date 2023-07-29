@@ -85,25 +85,26 @@ class GFLHead(AnchorHead):
         >>> assert len(cls_quality_score) == len(self.scales)
     """
 
-    def __init__(self,
-                 num_classes,
-                 in_channels,
-                 stacked_convs=4,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
-                 loss_dfl=dict(type='DistributionFocalLoss', loss_weight=0.25),
-                 bbox_coder=dict(type='DistancePointBBoxCoder'),
-                 reg_max=16,
-                 init_cfg=dict(
-                     type='Normal',
-                     layer='Conv2d',
-                     std=0.01,
-                     override=dict(
-                         type='Normal',
-                         name='gfl_cls',
-                         std=0.01,
-                         bias_prob=0.01)),
-                 **kwargs):
+    def __init__(
+            self,
+            num_classes,
+            in_channels,
+            stacked_convs=4,
+            conv_cfg=None,
+            norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
+            loss_dfl=dict(type='DistributionFocalLoss', loss_weight=0.25),
+            bbox_coder=dict(type='DistancePointBBoxCoder'),
+            reg_max=16,
+            init_cfg=dict(
+                type='Normal',
+                layer='Conv2d',
+                std=0.01,
+                override=dict(
+                    type='Normal',
+                    name='gfl_cls',
+                    std=0.01,
+                    bias_prob=0.01)),
+            **kwargs):
         self.stacked_convs = stacked_convs
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
@@ -242,10 +243,8 @@ class GFLHead(AnchorHead):
         """
         assert stride[0] == stride[1], 'h stride is not equal to w stride!'
         anchors = anchors.reshape(-1, 4)
-        cls_score = cls_score.permute(0, 2, 3,
-                                      1).reshape(-1, self.cls_out_channels)
-        bbox_pred = bbox_pred.permute(0, 2, 3,
-                                      1).reshape(-1, 4 * (self.reg_max + 1))
+        cls_score = cls_score.permute(0, 2, 3, 1).reshape(-1, self.cls_out_channels)
+        bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(-1, 4 * (self.reg_max + 1))
         bbox_targets = bbox_targets.reshape(-1, 4)
         labels = labels.reshape(-1)
         label_weights = label_weights.reshape(-1)
@@ -304,13 +303,14 @@ class GFLHead(AnchorHead):
         return loss_cls, loss_bbox, loss_dfl, weight_targets.sum()
 
     @force_fp32(apply_to=('cls_scores', 'bbox_preds'))
-    def loss(self,
-             cls_scores,
-             bbox_preds,
-             gt_bboxes,
-             gt_labels,
-             img_metas,
-             gt_bboxes_ignore=None):
+    def loss(
+            self,
+            cls_scores,
+            bbox_preds,
+            gt_bboxes,
+            gt_labels,
+            img_metas,
+            gt_bboxes_ignore=None):
         """Compute losses of the head.
 
         Args:
@@ -354,21 +354,19 @@ class GFLHead(AnchorHead):
          bbox_weights_list, num_total_pos, num_total_neg) = cls_reg_targets
 
         num_total_samples = reduce_mean(
-            torch.tensor(num_total_pos, dtype=torch.float,
-                         device=device)).item()
+            torch.tensor(num_total_pos, dtype=torch.float, device=device)).item()
         num_total_samples = max(num_total_samples, 1.0)
 
-        losses_cls, losses_bbox, losses_dfl,\
-            avg_factor = multi_apply(
-                self.loss_single,
-                anchor_list,
-                cls_scores,
-                bbox_preds,
-                labels_list,
-                label_weights_list,
-                bbox_targets_list,
-                self.prior_generator.strides,
-                num_total_samples=num_total_samples)
+        losses_cls, losses_bbox, losses_dfl, avg_factor = multi_apply(
+            self.loss_single,
+            anchor_list,
+            cls_scores,
+            bbox_preds,
+            labels_list,
+            label_weights_list,
+            bbox_targets_list,
+            self.prior_generator.strides,
+            num_total_samples=num_total_samples)
 
         avg_factor = sum(avg_factor)
         avg_factor = reduce_mean(avg_factor).clamp_(min=1).item()
@@ -377,16 +375,17 @@ class GFLHead(AnchorHead):
         return dict(
             loss_cls=losses_cls, loss_bbox=losses_bbox, loss_dfl=losses_dfl)
 
-    def _get_bboxes_single(self,
-                           cls_score_list,
-                           bbox_pred_list,
-                           score_factor_list,
-                           mlvl_priors,
-                           img_meta,
-                           cfg,
-                           rescale=False,
-                           with_nms=True,
-                           **kwargs):
+    def _get_bboxes_single(
+            self,
+            cls_score_list,
+            bbox_pred_list,
+            score_factor_list,
+            mlvl_priors,
+            img_meta,
+            cfg,
+            rescale=False,
+            with_nms=True,
+            **kwargs):
         """Transform outputs of a single image into bbox predictions.
 
         Args:
@@ -505,16 +504,16 @@ class GFLHead(AnchorHead):
             gt_labels_list = [None for _ in range(num_imgs)]
         (all_anchors, all_labels, all_label_weights, all_bbox_targets,
          all_bbox_weights, pos_inds_list, neg_inds_list) = multi_apply(
-             self._get_target_single,
-             anchor_list,
-             valid_flag_list,
-             num_level_anchors_list,
-             gt_bboxes_list,
-             gt_bboxes_ignore_list,
-             gt_labels_list,
-             img_metas,
-             label_channels=label_channels,
-             unmap_outputs=unmap_outputs)
+            self._get_target_single,
+            anchor_list,
+            valid_flag_list,
+            num_level_anchors_list,
+            gt_bboxes_list,
+            gt_bboxes_ignore_list,
+            gt_labels_list,
+            img_metas,
+            label_channels=label_channels,
+            unmap_outputs=unmap_outputs)
         # no valid anchors
         if any([labels is None for labels in all_labels]):
             return None
@@ -524,26 +523,27 @@ class GFLHead(AnchorHead):
         # split targets to a list w.r.t. multiple levels
         anchors_list = images_to_levels(all_anchors, num_level_anchors)
         labels_list = images_to_levels(all_labels, num_level_anchors)
-        label_weights_list = images_to_levels(all_label_weights,
-                                              num_level_anchors)
-        bbox_targets_list = images_to_levels(all_bbox_targets,
-                                             num_level_anchors)
-        bbox_weights_list = images_to_levels(all_bbox_weights,
-                                             num_level_anchors)
+        label_weights_list = images_to_levels(all_label_weights, num_level_anchors)
+
+        bbox_targets_list = images_to_levels(all_bbox_targets, num_level_anchors)
+
+        bbox_weights_list = images_to_levels(all_bbox_weights, num_level_anchors)
+
         return (anchors_list, labels_list, label_weights_list,
                 bbox_targets_list, bbox_weights_list, num_total_pos,
                 num_total_neg)
 
-    def _get_target_single(self,
-                           flat_anchors,
-                           valid_flags,
-                           num_level_anchors,
-                           gt_bboxes,
-                           gt_bboxes_ignore,
-                           gt_labels,
-                           img_meta,
-                           label_channels=1,
-                           unmap_outputs=True):
+    def _get_target_single(
+            self,
+            flat_anchors,
+            valid_flags,
+            num_level_anchors,
+            gt_bboxes,
+            gt_bboxes_ignore,
+            gt_labels,
+            img_meta,
+            label_channels=1,
+            unmap_outputs=True):
         """Compute regression, classification targets for anchors in a single
         image.
 
@@ -581,29 +581,28 @@ class GFLHead(AnchorHead):
                 neg_inds (Tensor): Indices of negative anchor with shape
                     (num_neg,).
         """
-        inside_flags = anchor_inside_flags(flat_anchors, valid_flags,
-                                           img_meta['img_shape'][:2],
-                                           self.train_cfg.allowed_border)
+        inside_flags = anchor_inside_flags(
+            flat_anchors, valid_flags,
+            img_meta['img_shape'][:2],
+            self.train_cfg.allowed_border)
         if not inside_flags.any():
-            return (None, ) * 7
+            return (None,) * 7
         # assign gt and sample anchors
         anchors = flat_anchors[inside_flags, :]
 
         num_level_anchors_inside = self.get_num_level_anchors_inside(
             num_level_anchors, inside_flags)
-        assign_result = self.assigner.assign(anchors, num_level_anchors_inside,
-                                             gt_bboxes, gt_bboxes_ignore,
-                                             gt_labels)
+        assign_result = self.assigner.assign(
+            anchors, num_level_anchors_inside,
+            gt_bboxes, gt_bboxes_ignore,
+            gt_labels)
 
-        sampling_result = self.sampler.sample(assign_result, anchors,
-                                              gt_bboxes)
+        sampling_result = self.sampler.sample(assign_result, anchors, gt_bboxes)
 
         num_valid_anchors = anchors.shape[0]
         bbox_targets = torch.zeros_like(anchors)
         bbox_weights = torch.zeros_like(anchors)
-        labels = anchors.new_full((num_valid_anchors, ),
-                                  self.num_classes,
-                                  dtype=torch.long)
+        labels = anchors.new_full((num_valid_anchors,), self.num_classes, dtype=torch.long)
         label_weights = anchors.new_zeros(num_valid_anchors, dtype=torch.float)
 
         pos_inds = sampling_result.pos_inds
@@ -632,8 +631,7 @@ class GFLHead(AnchorHead):
             anchors = unmap(anchors, num_total_anchors, inside_flags)
             labels = unmap(
                 labels, num_total_anchors, inside_flags, fill=self.num_classes)
-            label_weights = unmap(label_weights, num_total_anchors,
-                                  inside_flags)
+            label_weights = unmap(label_weights, num_total_anchors, inside_flags)
             bbox_targets = unmap(bbox_targets, num_total_anchors, inside_flags)
             bbox_weights = unmap(bbox_weights, num_total_anchors, inside_flags)
 

@@ -23,14 +23,15 @@ class LDHead(GFLHead):
             T is the temperature for distillation.
     """
 
-    def __init__(self,
-                 num_classes,
-                 in_channels,
-                 loss_ld=dict(
-                     type='LocalizationDistillationLoss',
-                     loss_weight=0.25,
-                     T=10),
-                 **kwargs):
+    def __init__(
+            self,
+            num_classes,
+            in_channels,
+            loss_ld=dict(
+                type='LocalizationDistillationLoss',
+                loss_weight=0.25,
+                T=10),
+            **kwargs):
 
         super(LDHead, self).__init__(num_classes, in_channels, **kwargs)
         self.loss_ld = build_loss(loss_ld)
@@ -40,6 +41,7 @@ class LDHead(GFLHead):
         """Compute loss of a single scale level.
 
         Args:
+            soft_targets:
             anchors (Tensor): Box reference for each scale level with shape
                 (N, num_total_anchors, 4).
             cls_score (Tensor): Cls and quality joint scores for each scale
@@ -62,13 +64,9 @@ class LDHead(GFLHead):
         """
         assert stride[0] == stride[1], 'h stride is not equal to w stride!'
         anchors = anchors.reshape(-1, 4)
-        cls_score = cls_score.permute(0, 2, 3,
-                                      1).reshape(-1, self.cls_out_channels)
-        bbox_pred = bbox_pred.permute(0, 2, 3,
-                                      1).reshape(-1, 4 * (self.reg_max + 1))
-        soft_targets = soft_targets.permute(0, 2, 3,
-                                            1).reshape(-1,
-                                                       4 * (self.reg_max + 1))
+        cls_score = cls_score.permute(0, 2, 3, 1).reshape(-1, self.cls_out_channels)
+        bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(-1, 4 * (self.reg_max + 1))
+        soft_targets = soft_targets.permute(0, 2, 3, 1).reshape(-1, 4 * (self.reg_max + 1))
 
         bbox_targets = bbox_targets.reshape(-1, 4)
         labels = labels.reshape(-1)
@@ -139,17 +137,19 @@ class LDHead(GFLHead):
 
         return loss_cls, loss_bbox, loss_dfl, loss_ld, weight_targets.sum()
 
-    def forward_train(self,
-                      x,
-                      out_teacher,
-                      img_metas,
-                      gt_bboxes,
-                      gt_labels=None,
-                      gt_bboxes_ignore=None,
-                      proposal_cfg=None,
-                      **kwargs):
+    def forward_train(
+            self,
+            x,
+            out_teacher,
+            img_metas,
+            gt_bboxes,
+            gt_labels=None,
+            gt_bboxes_ignore=None,
+            proposal_cfg=None,
+            **kwargs):
         """
         Args:
+            out_teacher:
             x (list[Tensor]): Features from FPN.
             img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
@@ -182,17 +182,19 @@ class LDHead(GFLHead):
             return losses, proposal_list
 
     @force_fp32(apply_to=('cls_scores', 'bbox_preds'))
-    def loss(self,
-             cls_scores,
-             bbox_preds,
-             gt_bboxes,
-             gt_labels,
-             soft_target,
-             img_metas,
-             gt_bboxes_ignore=None):
+    def loss(
+            self,
+            cls_scores,
+            bbox_preds,
+            gt_bboxes,
+            gt_labels,
+            soft_target,
+            img_metas,
+            gt_bboxes_ignore=None):
         """Compute losses of the head.
 
         Args:
+            soft_target:
             cls_scores (list[Tensor]): Cls and quality scores for each scale
                 level has shape (N, num_classes, H, W).
             bbox_preds (list[Tensor]): Box distribution logits for each scale
@@ -233,22 +235,20 @@ class LDHead(GFLHead):
          bbox_weights_list, num_total_pos, num_total_neg) = cls_reg_targets
 
         num_total_samples = reduce_mean(
-            torch.tensor(num_total_pos, dtype=torch.float,
-                         device=device)).item()
+            torch.tensor(num_total_pos, dtype=torch.float, device=device)).item()
         num_total_samples = max(num_total_samples, 1.0)
 
-        losses_cls, losses_bbox, losses_dfl, losses_ld, \
-            avg_factor = multi_apply(
-                self.loss_single,
-                anchor_list,
-                cls_scores,
-                bbox_preds,
-                labels_list,
-                label_weights_list,
-                bbox_targets_list,
-                self.prior_generator.strides,
-                soft_target,
-                num_total_samples=num_total_samples)
+        losses_cls, losses_bbox, losses_dfl, losses_ld, avg_factor = multi_apply(
+            self.loss_single,
+            anchor_list,
+            cls_scores,
+            bbox_preds,
+            labels_list,
+            label_weights_list,
+            bbox_targets_list,
+            self.prior_generator.strides,
+            soft_target,
+            num_total_samples=num_total_samples)
 
         avg_factor = sum(avg_factor) + 1e-6
         avg_factor = reduce_mean(avg_factor).item()

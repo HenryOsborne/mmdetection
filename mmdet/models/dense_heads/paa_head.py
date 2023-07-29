@@ -75,7 +75,7 @@ class PAAHead(ATSSHead):
                  *args,
                  topk=9,
                  score_voting=True,
-                 covariance_type='diag',
+                 covariance_type='full',
                  **kwargs):
         # topk used in paa reassign process
         self.topk = topk

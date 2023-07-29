@@ -3,7 +3,7 @@ data_root = 'data/xview/'
 work_dir = './work_dirs/tmp/ga_faster_r50_abfn_xview'
 img_scale = (800, 800)
 num_classes = 1
-
+num_proposal = 10000
 model = dict(
     type='FasterSSPNet',
     pretrained='torchvision://resnet50',
@@ -111,9 +111,9 @@ model = dict(
             center_ratio=0.2,
             ignore_ratio=0.5),
         rpn_proposal=dict(
-            nms_pre=10000,
-            nms_post=10000,
-            max_per_img=10000,
+            nms_pre=num_proposal,
+            nms_post=num_proposal,
+            max_per_img=num_proposal,
             nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
         rcnn=dict(
@@ -133,15 +133,15 @@ model = dict(
             debug=False)),
     test_cfg=dict(
         rpn=dict(
-            nms_pre=10000,
-            nms_post=10000,
-            max_per_img=10000,
+            nms_pre=num_proposal,
+            nms_post=num_proposal,
+            max_per_img=num_proposal,
             nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
         rcnn=dict(
             score_thr=0.1,
             nms=dict(type='nms', iou_threshold=0.2),
-            max_per_img=10000)
+            max_per_img=num_proposal)
     )
 )
 

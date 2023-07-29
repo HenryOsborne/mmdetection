@@ -130,6 +130,46 @@ class BBoxTestMixin(object):
         proposal_list = self.get_bboxes(*rpn_outs, img_metas=img_metas)
         return proposal_list
 
+    def simple_test_rpn_teacher(self,
+                                x,
+                                gt_bboxes,
+                                gt_labels,
+                                img_metas):
+        rpn_outs = self(x)
+        cls_scores, bbox_preds = rpn_outs
+
+        featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
+        assert len(featmap_sizes) == self.prior_generator.num_levels
+
+        device = cls_scores[0].device
+        anchor_list, valid_flag_list = self.get_anchors(
+            featmap_sizes, img_metas, device=device)
+        label_channels = self.cls_out_channels if self.use_sigmoid_cls else 1
+
+        cls_reg_targets = self.get_targets(
+            anchor_list,
+            valid_flag_list,
+            gt_bboxes,
+            img_metas,
+            gt_bboxes_ignore_list=None,
+            gt_labels_list=gt_labels,
+            label_channels=label_channels)
+        if cls_reg_targets is None:
+            return None
+
+        (
+            labels_list,
+            label_weights_list,
+            bbox_targets_list,
+            bbox_weights_list,
+            num_total_pos,
+            num_total_neg,
+        ) = cls_reg_targets
+
+        out_teacher = (labels_list, label_weights_list, bbox_targets_list, bbox_weights_list)
+
+        return out_teacher
+
     def aug_test_rpn(self, feats, img_metas):
         """Test with augmentation for only for ``RPNHead`` and its variants,
         e.g., ``GARPNHead``, etc.
@@ -165,7 +205,6 @@ class BBoxTestMixin(object):
         return merged_proposals
 
     if sys.version_info >= (3, 7):
-
         async def async_simple_test_rpn(self, x, img_metas):
             sleep_interval = self.test_cfg.pop('async_sleep_interval', 0.025)
             async with completed(

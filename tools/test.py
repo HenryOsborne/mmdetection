@@ -26,9 +26,6 @@ def parse_args():
         description='MMDet test (and eval) a model')
     parser.add_argument('config', help='test config file path')
     parser.add_argument('checkpoint', help='checkpoint file')
-    parser.add_argument(
-        '--work-dir',
-        help='the directory to save the file containing evaluation metrics')
     parser.add_argument('--out', help='output result file in pickle format')
     parser.add_argument(
         '--fuse-conv-bn',
@@ -55,6 +52,7 @@ def parse_args():
              'submit it to the test server')
     parser.add_argument(
         '--eval',
+        default='bbox',
         type=str,
         nargs='+',
         help='evaluation metrics, which depends on the dataset, e.g., "bbox",'
@@ -120,6 +118,9 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    # 工作目录为权重文件所在的目录
+    args.work_dir = args.checkpoint[:args.checkpoint.rfind('/') + 1]
 
     assert args.out or args.eval or args.format_only or args.show \
            or args.show_dir, \

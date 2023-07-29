@@ -235,20 +235,26 @@ class TwoStageDetector(BaseDetector):
             proposal_list = proposals
 
         # ------------------------------------------------------------------------------------
-        if self.show_feature:
+        show_feature = False
+        feature_dir = 'work_dirs/feature_visualization/faster_r50_abfn'
+        os.makedirs(feature_dir, exist_ok=True)
+        if show_feature:
             # from PIL import Image
             # import numpy as np
-            # img_name = img_metas[0]['ori_filename'].split('.')[0]
-            # feature = x[0][0][0].cpu().unsqueeze(0).detach().numpy()
+            #
+            # feature = x[0][0][0].cpu()
             # feature = 1.0 / (1 + np.exp(-1 * feature))
             # feature = np.round(feature * 255)
-            # img = feature.astype(np.uint8).transpose(1, 2, 0)
-            # img = cv2.applyColorMap(img, cv2.COLORMAP_JET)
-            # img = cv2.resize(img, (800, 800))
-            # cv2.imwrite(os.path.join(self.feature_dir, str(img_name) + '_p2.jpg'), img)
+            # img = transforms.ToPILImage()(feature).convert('RGB')
+            # img = img.resize((800, 800), Image.ANTIALIAS)
+            # img_name = img_metas[0]['ori_filename'].split('.')[0]
+            # os.makedirs('feature', exist_ok=True)
+            # img.save(self.feature_dir + str(img_name) + '_p2.jpg')
             # --------------------------------------------------------------------------------
             import numpy as np
             from mmdet.utils import featuremap_to_heatmap
+            import mmcv
+            import cv2
             img_name = img_metas[0]['ori_filename'].split('.')[0]
             heatmap = featuremap_to_heatmap(x[0])
             image = mmcv.imread(img_metas[0]['filename'])
@@ -257,7 +263,31 @@ class TwoStageDetector(BaseDetector):
             heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)  # 将热力图应用于原始图像
             # superimposed_img = heatmap * 0.4 + image  # 这里的0.4是热力图强度因子
             superimposed_img = heatmap * 0.4
-            cv2.imwrite(os.path.join(self.feature_dir, str(img_name) + '_p2.jpg'), superimposed_img)  # 将图像保存到硬盘
+            cv2.imwrite(os.path.join(feature_dir, str(img_name) + '_p2.jpg'), superimposed_img)  # 将图像保存到硬盘
+        # ------------------------------------------------------------------------------------
+
+        # ------------------------------------------------------------------------------------
+        show_channel_feature = False
+        channel_feature_dir = 'work_dirs/feature_visualization/channel_faster_r50_abfn'
+        os.makedirs(channel_feature_dir, exist_ok=True)
+        if show_channel_feature:
+            import torch.nn.functional as F
+            import cv2
+            import numpy as np
+            img_name = img_metas[0]['ori_filename'].split('.')[0]
+
+            heatmap = F.adaptive_avg_pool2d(x[0], 1).squeeze(-1).squeeze(-1).squeeze(0)
+            heatmap = torch.sigmoid(heatmap).view(16, 16).cpu().numpy()
+            heatmap = np.uint8(255 * heatmap)
+
+            # 将16*16的通道特征映射到1024*1024的大图上去，写的稀烂，凑合着用
+            img = np.zeros((1024, 1024), dtype=np.uint8)
+            for i in range(heatmap.shape[0]):
+                for j in range(heatmap.shape[1]):
+                    img[i * 64:i * 64 + 64, j * 64:j * 64 + 64] = heatmap[i][j]
+
+            img = cv2.applyColorMap(img, cv2.COLORMAP_BONE)
+            cv2.imwrite(os.path.join(channel_feature_dir, str(img_name) + '_channel.jpg'), img)
         # ------------------------------------------------------------------------------------
 
         # ------------------------------------------------------------------------------------

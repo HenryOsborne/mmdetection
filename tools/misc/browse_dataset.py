@@ -25,7 +25,7 @@ def parse_args():
         help='skip some useless pipeline')
     parser.add_argument(
         '--output-dir',
-        default='work_dirs/tmp/faster_convnext_abfn_xview/out2',
+        default='work_dirs/tmp/coco_dir/',
         type=str,
         help='If there is no display interface, you can save it')
     parser.add_argument('--not-show', default=False, action='store_true')
@@ -87,8 +87,9 @@ def main():
         ]
     # ==============================================================================
     cfg.data.val.pipeline = cfg.data.train.pipeline
-    # ==============================================================================
     dataset = build_dataset(cfg.data.val)
+    num_level_target = [0, 0, 0]
+    # ==============================================================================
 
     progress_bar = mmcv.ProgressBar(len(dataset))
 
@@ -119,7 +120,7 @@ def main():
             # please comment the following line
             gt_bboxes = None
 
-        imshow_det_bboxes(
+        level = imshow_det_bboxes(
             item['img'],
             gt_bboxes,
             gt_labels,
@@ -132,7 +133,11 @@ def main():
             text_color=(200, 200, 200),
             mask_color=dataset.PALETTE)
 
+        c = [num_level_target[i] + level[i] for i in range(len(level))]
+        num_level_target = c
+
         progress_bar.update()
+    print(num_level_target)
 
 
 if __name__ == '__main__':

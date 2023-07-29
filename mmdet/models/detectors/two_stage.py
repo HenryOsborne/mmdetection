@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
 import warnings
 
 import torch
@@ -15,19 +16,21 @@ class TwoStageDetector(BaseDetector):
     task-specific regression head.
     """
 
-    def __init__(self,
-                 backbone,
-                 neck=None,
-                 rpn_head=None,
-                 roi_head=None,
-                 train_cfg=None,
-                 test_cfg=None,
-                 pretrained=None,
-                 init_cfg=None):
+    def __init__(
+            self,
+            backbone,
+            neck=None,
+            rpn_head=None,
+            roi_head=None,
+            train_cfg=None,
+            test_cfg=None,
+            pretrained=None,
+            init_cfg=None):
         super(TwoStageDetector, self).__init__(init_cfg)
         if pretrained:
-            warnings.warn('DeprecationWarning: pretrained is deprecated, '
-                          'please use "init_cfg" instead')
+            warnings.warn(
+                'DeprecationWarning: pretrained is deprecated, '
+                'please use "init_cfg" instead')
             backbone.pretrained = pretrained
         self.backbone = build_backbone(backbone)
 
@@ -87,15 +90,16 @@ class TwoStageDetector(BaseDetector):
         outs = outs + (roi_outs,)
         return outs
 
-    def forward_train(self,
-                      img,
-                      img_metas,
-                      gt_bboxes,
-                      gt_labels,
-                      gt_bboxes_ignore=None,
-                      gt_masks=None,
-                      proposals=None,
-                      **kwargs):
+    def forward_train(
+            self,
+            img,
+            img_metas,
+            gt_bboxes,
+            gt_labels,
+            gt_bboxes_ignore=None,
+            gt_masks=None,
+            proposals=None,
+            **kwargs):
         """
         Args:
             img (Tensor): of shape (N, C, H, W) encoding input images.
@@ -130,8 +134,9 @@ class TwoStageDetector(BaseDetector):
 
         # RPN forward and loss
         if self.with_rpn:
-            proposal_cfg = self.train_cfg.get('rpn_proposal',
-                                              self.test_cfg.rpn)
+            proposal_cfg = self.train_cfg.get(
+                'rpn_proposal',
+                self.test_cfg.rpn)
             rpn_losses, proposal_list = self.rpn_head.forward_train(
                 x,
                 img_metas,
@@ -144,10 +149,11 @@ class TwoStageDetector(BaseDetector):
         else:
             proposal_list = proposals
 
-        roi_losses = self.roi_head.forward_train(x, img_metas, proposal_list,
-                                                 gt_bboxes, gt_labels,
-                                                 gt_bboxes_ignore, gt_masks,
-                                                 **kwargs)
+        roi_losses = self.roi_head.forward_train(
+            x, img_metas, proposal_list,
+            gt_bboxes, gt_labels,
+            gt_bboxes_ignore, gt_masks,
+            **kwargs)
         losses.update(roi_losses)
 
         return losses
@@ -175,13 +181,69 @@ class TwoStageDetector(BaseDetector):
 
         assert self.with_bbox, 'Bbox head must be implemented.'
         x = self.extract_feat(img)
+
+        # ------------------------------------------------------------------------------------
+        show_feature = False
+        feature_dir = 'work_dirs/feature_visualization/faster_r50_coco'
+        os.makedirs(feature_dir, exist_ok=True)
+        if show_feature:
+            # from PIL import Image
+            # import numpy as np
+            #
+            # feature = x[0][0][0].cpu()
+            # feature = 1.0 / (1 + np.exp(-1 * feature))
+            # feature = np.round(feature * 255)
+            # img = transforms.ToPILImage()(feature).convert('RGB')
+            # img = img.resize((800, 800), Image.ANTIALIAS)
+            # img_name = img_metas[0]['ori_filename'].split('.')[0]
+            # os.makedirs('feature', exist_ok=True)
+            # img.save(self.feature_dir + str(img_name) + '_p2.jpg')
+            # --------------------------------------------------------------------------------
+            import numpy as np
+            from mmdet.utils import featuremap_to_heatmap
+            import mmcv
+            import cv2
+            img_name = img_metas[0]['ori_filename'].split('.')[0]
+            heatmap = featuremap_to_heatmap(x[0])
+            image = mmcv.imread(img_metas[0]['filename'])
+            heatmap = cv2.resize(heatmap, (image.shape[1], image.shape[0]))  # 将热力图的大小调整为与原始图像相同
+            heatmap = np.uint8(255 * heatmap)  # 将热力图转换为RGB格式
+            heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)  # 将热力图应用于原始图像
+            superimposed_img = heatmap * 0.4  # + image  # 这里的0.4是热力图强度因子
+            cv2.imwrite(os.path.join(feature_dir, str(img_name) + '_p2.jpg'), superimposed_img)  # 将图像保存到硬盘
+        # ------------------------------------------------------------------------------------
+        show_channel_feature = False
+        channel_feature_dir = 'work_dirs/feature_visualization/channel_fgd'
+        os.makedirs(channel_feature_dir, exist_ok=True)
+        if show_channel_feature:
+            import torch.nn.functional as F
+            import cv2
+            import numpy as np
+            img_name = img_metas[0]['ori_filename'].split('.')[0]
+
+            heatmap = F.adaptive_avg_pool2d(x[0], 1).squeeze(-1).squeeze(-1).squeeze(0)
+            heatmap = torch.sigmoid(heatmap).view(16, 16).cpu().numpy()
+            heatmap = np.uint8(255 * heatmap)
+
+            # 将16*16的通道特征映射到1024*1024的大图上去，写的稀烂，凑合着用
+            img = np.zeros((1024, 1024), dtype=np.uint8)
+            for i in range(heatmap.shape[0]):
+                for j in range(heatmap.shape[1]):
+                    img[i * 64:i * 64 + 64, j * 64:j * 64 + 64] = heatmap[i][j]
+
+            img = cv2.applyColorMap(img, cv2.COLORMAP_BONE)
+            cv2.imwrite(os.path.join(channel_feature_dir, str(img_name) + '_channel.jpg'), img)
+        # ------------------------------------------------------------------------------------
+
         if proposals is None:
             proposal_list = self.rpn_head.simple_test_rpn(x, img_metas)
         else:
             proposal_list = proposals
 
-        return self.roi_head.simple_test(
+        result = self.roi_head.simple_test(
             x, proposal_list, img_metas, rescale=rescale)
+
+        return result
 
     def aug_test(self, imgs, img_metas, rescale=False):
         """Test with augmentations.

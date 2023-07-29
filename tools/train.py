@@ -20,6 +20,7 @@ from mmdet.models import build_detector
 from mmdet.utils import (collect_env, get_device, get_root_logger,
                          replace_cfg_vals, setup_multi_processes,
                          update_data_root)
+from mmdet.distillation import build_distiller
 
 
 def parse_args():
@@ -41,20 +42,20 @@ def parse_args():
         '--gpus',
         type=int,
         help='(Deprecated, please use --gpu-id) number of gpus to use '
-        '(only applicable to non-distributed training)')
+             '(only applicable to non-distributed training)')
     group_gpus.add_argument(
         '--gpu-ids',
         type=int,
         nargs='+',
         help='(Deprecated, please use --gpu-id) ids of gpus to use '
-        '(only applicable to non-distributed training)')
+             '(only applicable to non-distributed training)')
     group_gpus.add_argument(
         '--gpu-id',
         type=int,
         default=0,
         help='id of gpu to use '
-        '(only applicable to non-distributed training)')
-    parser.add_argument('--seed', type=int, default=42, help='random seed')
+             '(only applicable to non-distributed training)')
+    parser.add_argument('--seed', type=int, default=None, help='random seed')
     parser.add_argument(
         '--diff-seed',
         action='store_true',
@@ -68,18 +69,18 @@ def parse_args():
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file (deprecate), '
-        'change to --cfg-options instead.')
+             'in xxx=yyy format will be merged into config file (deprecate), '
+             'change to --cfg-options instead.')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm', 'mpi'],
@@ -209,11 +210,21 @@ def main():
     meta['seed'] = seed
     meta['exp_name'] = osp.basename(args.config)
 
-    model = build_detector(
-        cfg.model,
-        train_cfg=cfg.get('train_cfg'),
-        test_cfg=cfg.get('test_cfg'))
-    model.init_weights()
+    distiller_cfg = cfg.get('distiller', None)
+    if distiller_cfg is None:
+        model = build_detector(
+            cfg.model,
+            train_cfg=cfg.get('train_cfg'),
+            test_cfg=cfg.get('test_cfg'))
+        model.init_weights()
+    else:
+        teacher_cfg = Config.fromfile(cfg.teacher_cfg)
+        student_cfg = Config.fromfile(cfg.student_cfg)
+
+        model = build_distiller(cfg.distiller, teacher_cfg, student_cfg,
+                                train_cfg=student_cfg.get('train_cfg'),
+                                test_cfg=student_cfg.get('test_cfg'))
+        model.init_weights()
 
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:

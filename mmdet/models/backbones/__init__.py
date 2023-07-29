@@ -20,6 +20,7 @@ from .swin_transformer import SwinTransformerCustom
 from .poolformer import poolformer_s12_feat, poolformer_s36_feat
 from .convnext import ConvNeXt
 from .convnext_test import ConvNeXtTEST
+from .replknet import RepLKNet
 
 __all__ = [
     'RegNet', 'ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet',
@@ -28,5 +29,6 @@ __all__ = [
     'SwinTransformer', 'PyramidVisionTransformer',
     'PyramidVisionTransformerV2', 'EfficientNet',
 
-    'SwinTransformerCustom', 'poolformer_s12_feat', 'poolformer_s36_feat', 'ConvNeXt', 'ConvNeXtTEST'
+    'SwinTransformerCustom', 'poolformer_s12_feat', 'poolformer_s36_feat', 'ConvNeXt', 'ConvNeXtTEST',
+    'RepLKNet'
 ]

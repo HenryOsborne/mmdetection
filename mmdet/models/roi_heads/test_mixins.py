@@ -13,7 +13,6 @@ if sys.version_info >= (3, 7):
 
 
 class BBoxTestMixin:
-
     if sys.version_info >= (3, 7):
 
         async def async_test_bboxes(self,
@@ -78,7 +77,7 @@ class BBoxTestMixin:
         if rois.shape[0] == 0:
             batch_size = len(proposals)
             det_bbox = rois.new_zeros(0, 5)
-            det_label = rois.new_zeros((0, ), dtype=torch.long)
+            det_label = rois.new_zeros((0,), dtype=torch.long)
             if rcnn_test_cfg is None:
                 det_bbox = det_bbox[:, :4]
                 det_label = rois.new_zeros(
@@ -107,7 +106,7 @@ class BBoxTestMixin:
                 bbox_pred = self.bbox_head.bbox_pred_split(
                     bbox_pred, num_proposals_per_img)
         else:
-            bbox_pred = (None, ) * len(proposals)
+            bbox_pred = (None,) * len(proposals)
 
         # apply bbox post-processing to each image individually
         det_bboxes = []
@@ -116,7 +115,7 @@ class BBoxTestMixin:
             if rois[i].shape[0] == 0:
                 # There is no proposal in the single image
                 det_bbox = rois[i].new_zeros(0, 5)
-                det_label = rois[i].new_zeros((0, ), dtype=torch.long)
+                det_label = rois[i].new_zeros((0,), dtype=torch.long)
                 if rcnn_test_cfg is None:
                     det_bbox = det_bbox[:, :4]
                     det_label = rois[i].new_zeros(
@@ -134,6 +133,37 @@ class BBoxTestMixin:
             det_bboxes.append(det_bbox)
             det_labels.append(det_label)
         return det_bboxes, det_labels
+
+    def simple_test_bboxes_teacher(
+            self,
+            x,
+            img_metas,
+            proposal_list,
+            gt_bboxes,
+            gt_labels,
+            gt_bboxes_ignore=None,
+            gt_masks=None):
+
+        if self.with_bbox or self.with_mask:
+            num_imgs = len(img_metas)
+            if gt_bboxes_ignore is None:
+                gt_bboxes_ignore = [None for _ in range(num_imgs)]
+            sampling_results = []
+            for i in range(num_imgs):
+                assign_result = self.bbox_assigner.assign(
+                    proposal_list[i], gt_bboxes[i], gt_bboxes_ignore[i],
+                    gt_labels[i])
+                sampling_result = self.bbox_sampler.sample(
+                    assign_result,
+                    proposal_list[i],
+                    gt_bboxes[i],
+                    gt_labels[i],
+                    feats=[lvl_feat[i][None] for lvl_feat in x])
+                sampling_results.append(sampling_result)
+
+        bbox_targets = self.bbox_head.get_targets(sampling_results, gt_bboxes, gt_labels, self.train_cfg)
+
+        return bbox_targets
 
     def aug_test_bboxes(self, feats, img_metas, proposal_list, rcnn_test_cfg):
         """Test det bboxes with test time augmentation."""
@@ -166,7 +196,7 @@ class BBoxTestMixin:
         if merged_bboxes.shape[0] == 0:
             # There is no proposal in the single image
             det_bboxes = merged_bboxes.new_zeros(0, 5)
-            det_labels = merged_bboxes.new_zeros((0, ), dtype=torch.long)
+            det_labels = merged_bboxes.new_zeros((0,), dtype=torch.long)
         else:
             det_bboxes, det_labels = multiclass_nms(merged_bboxes,
                                                     merged_scores,
@@ -177,7 +207,6 @@ class BBoxTestMixin:
 
 
 class MaskTestMixin:
-
     if sys.version_info >= (3, 7):
 
         async def async_test_mask(self,

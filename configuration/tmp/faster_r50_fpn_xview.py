@@ -1,4 +1,10 @@
+dataset_type = 'XviewDataset'
+data_root = 'data/xview/'
+work_dir = './work_dirs/tmp/faster_r50_fpn_xview'
 img_scale = (800, 800)
+num_classes = 1
+num_proposal = 10000
+
 # model settings
 model = dict(
     type='FasterRCNN',
@@ -42,7 +48,7 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             roi_feat_size=7,
-            num_classes=1,
+            num_classes=num_classes,
             reg_class_agnostic=False,
             loss_cls=dict(
                 type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
@@ -70,9 +76,9 @@ model = dict(
             pos_weight=-1,
             debug=False),
         rpn_proposal=dict(
-            nms_pre=10000,
-            nms_post=10000,
-            max_per_img=10000,
+            nms_pre=num_proposal,
+            nms_post=num_proposal,
+            max_per_img=num_proposal,
             nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
         rcnn=dict(
@@ -92,24 +98,19 @@ model = dict(
             debug=False)),
     test_cfg=dict(
         rpn=dict(
-            nms_pre=10000,
-            nms_post=10000,
-            max_per_img=10000,
+            nms_pre=num_proposal,
+            nms_post=num_proposal,
+            max_per_img=num_proposal,
             nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
         rcnn=dict(
             # score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=2000)
-            score_thr=0.3, nms=dict(type='nms', iou_threshold=0.2), max_per_img=10000)
+            score_thr=0.3, nms=dict(type='nms', iou_threshold=0.2), max_per_img=num_proposal)
         # score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.15, min_score=0.3) , max_per_img=2000)
         # soft-nms is also supported for rcnn testing
         # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
     )
 )
-# model training and testing settings
-
-# dataset settings
-dataset_type = 'XviewDataset'
-data_root = 'data/xview/'
 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
@@ -160,8 +161,7 @@ data = dict(
         img_prefix=data_root + 'images/',
         pipeline=test_pipeline))
 
-# optimizer
-evaluation = dict(interval=100, metric='bbox', mode='global')
+evaluation = dict(interval=10, metric='bbox')
 optimizer = dict(type='SGD', lr=0.0025, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 
@@ -171,22 +171,20 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[45, 48])
-checkpoint_config = dict(interval=10)
+    step=[27, 29])
 
-# yapf:disable
-log_config = dict(
-    interval=50,
-    hooks=[
-        dict(type='TextLoggerHook'),
-        dict(type='TensorboardLoggerHook')
-    ])
-# yapf:enable
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=50)
+runner = dict(type='EpochBasedRunner', max_epochs=30)
+checkpoint_config = dict(interval=10)
+log_config = dict(interval=50, hooks=[dict(type='TextLoggerHook')])
+custom_hooks = [dict(type='NumClassCheckHook')]
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/tmp/faster_r50_fpn_xview'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]
+opencv_num_threads = 0
+mp_start_method = 'fork'
+auto_scale_lr = dict(enable=False, base_batch_size=16)
+auto_resume = False
+gpu_ids = [0]

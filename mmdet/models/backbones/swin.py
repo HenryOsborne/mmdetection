@@ -38,22 +38,22 @@ class WindowMSA(BaseModule):
             Default: None.
     """
 
-    def __init__(self,
-                 embed_dims,
-                 num_heads,
-                 window_size,
-                 qkv_bias=True,
-                 qk_scale=None,
-                 attn_drop_rate=0.,
-                 proj_drop_rate=0.,
-                 init_cfg=None):
-
+    def __init__(
+            self,
+            embed_dims,
+            num_heads,
+            window_size,
+            qkv_bias=True,
+            qk_scale=None,
+            attn_drop_rate=0.,
+            proj_drop_rate=0.,
+            init_cfg=None):
         super().__init__()
         self.embed_dims = embed_dims
         self.window_size = window_size  # Wh, Ww
         self.num_heads = num_heads
         head_embed_dims = embed_dims // num_heads
-        self.scale = qk_scale or head_embed_dims**-0.5
+        self.scale = qk_scale or head_embed_dims ** -0.5
         self.init_cfg = init_cfg
 
         # define a parameter table of relative position bias
@@ -97,9 +97,9 @@ class WindowMSA(BaseModule):
 
         relative_position_bias = self.relative_position_bias_table[
             self.relative_position_index.view(-1)].view(
-                self.window_size[0] * self.window_size[1],
-                self.window_size[0] * self.window_size[1],
-                -1)  # Wh*Ww,Wh*Ww,nH
+            self.window_size[0] * self.window_size[1],
+            self.window_size[0] * self.window_size[1],
+            -1)  # Wh*Ww,Wh*Ww,nH
         relative_position_bias = relative_position_bias.permute(
             2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
         attn = attn + relative_position_bias.unsqueeze(0)
@@ -148,17 +148,18 @@ class ShiftWindowMSA(BaseModule):
             Default: None.
     """
 
-    def __init__(self,
-                 embed_dims,
-                 num_heads,
-                 window_size,
-                 shift_size=0,
-                 qkv_bias=True,
-                 qk_scale=None,
-                 attn_drop_rate=0,
-                 proj_drop_rate=0,
-                 dropout_layer=dict(type='DropPath', drop_prob=0.),
-                 init_cfg=None):
+    def __init__(
+            self,
+            embed_dims,
+            num_heads,
+            window_size,
+            shift_size=0,
+            qkv_bias=True,
+            qk_scale=None,
+            attn_drop_rate=0,
+            proj_drop_rate=0,
+            dropout_layer=dict(type='DropPath', drop_prob=0.),
+            init_cfg=None):
         super().__init__(init_cfg)
 
         self.window_size = window_size
@@ -217,7 +218,7 @@ class ShiftWindowMSA(BaseModule):
             attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
             attn_mask = attn_mask.masked_fill(attn_mask != 0,
                                               float(-100.0)).masked_fill(
-                                                  attn_mask == 0, float(0.0))
+                attn_mask == 0, float(0.0))
         else:
             shifted_query = query
             attn_mask = None
@@ -225,7 +226,7 @@ class ShiftWindowMSA(BaseModule):
         # nW*B, window_size, window_size, C
         query_windows = self.window_partition(shifted_query)
         # nW*B, window_size*window_size, C
-        query_windows = query_windows.view(-1, self.window_size**2, C)
+        query_windows = query_windows.view(-1, self.window_size ** 2, C)
 
         # W-MSA/SW-MSA (nW*B, window_size*window_size, C)
         attn_windows = self.w_msa(query_windows, mask=attn_mask)
@@ -310,21 +311,22 @@ class SwinBlock(BaseModule):
             Default: None.
     """
 
-    def __init__(self,
-                 embed_dims,
-                 num_heads,
-                 feedforward_channels,
-                 window_size=7,
-                 shift=False,
-                 qkv_bias=True,
-                 qk_scale=None,
-                 drop_rate=0.,
-                 attn_drop_rate=0.,
-                 drop_path_rate=0.,
-                 act_cfg=dict(type='GELU'),
-                 norm_cfg=dict(type='LN'),
-                 with_cp=False,
-                 init_cfg=None):
+    def __init__(
+            self,
+            embed_dims,
+            num_heads,
+            feedforward_channels,
+            window_size=7,
+            shift=False,
+            qkv_bias=True,
+            qk_scale=None,
+            drop_rate=0.,
+            attn_drop_rate=0.,
+            drop_path_rate=0.,
+            act_cfg=dict(type='GELU'),
+            norm_cfg=dict(type='LN'),
+            with_cp=False,
+            init_cfg=None):
 
         super(SwinBlock, self).__init__()
 
@@ -407,22 +409,23 @@ class SwinBlockSequence(BaseModule):
             Default: None.
     """
 
-    def __init__(self,
-                 embed_dims,
-                 num_heads,
-                 feedforward_channels,
-                 depth,
-                 window_size=7,
-                 qkv_bias=True,
-                 qk_scale=None,
-                 drop_rate=0.,
-                 attn_drop_rate=0.,
-                 drop_path_rate=0.,
-                 downsample=None,
-                 act_cfg=dict(type='GELU'),
-                 norm_cfg=dict(type='LN'),
-                 with_cp=False,
-                 init_cfg=None):
+    def __init__(
+            self,
+            embed_dims,
+            num_heads,
+            feedforward_channels,
+            depth,
+            window_size=7,
+            qkv_bias=True,
+            qk_scale=None,
+            drop_rate=0.,
+            attn_drop_rate=0.,
+            drop_path_rate=0.,
+            downsample=None,
+            act_cfg=dict(type='GELU'),
+            norm_cfg=dict(type='LN'),
+            with_cp=False,
+            init_cfg=None):
         super().__init__(init_cfg=init_cfg)
 
         if isinstance(drop_path_rate, list):
@@ -521,31 +524,32 @@ class SwinTransformer(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 pretrain_img_size=224,
-                 in_channels=3,
-                 embed_dims=96,
-                 patch_size=4,
-                 window_size=7,
-                 mlp_ratio=4,
-                 depths=(2, 2, 6, 2),
-                 num_heads=(3, 6, 12, 24),
-                 strides=(4, 2, 2, 2),
-                 out_indices=(0, 1, 2, 3),
-                 qkv_bias=True,
-                 qk_scale=None,
-                 patch_norm=True,
-                 drop_rate=0.,
-                 attn_drop_rate=0.,
-                 drop_path_rate=0.1,
-                 use_abs_pos_embed=False,
-                 act_cfg=dict(type='GELU'),
-                 norm_cfg=dict(type='LN'),
-                 with_cp=False,
-                 pretrained=None,
-                 convert_weights=False,
-                 frozen_stages=-1,
-                 init_cfg=None):
+    def __init__(
+            self,
+            pretrain_img_size=224,
+            in_channels=3,
+            embed_dims=96,
+            patch_size=4,
+            window_size=7,
+            mlp_ratio=4,
+            depths=(2, 2, 6, 2),
+            num_heads=(3, 6, 12, 24),
+            strides=(4, 2, 2, 2),
+            out_indices=(0, 1, 2, 3),
+            qkv_bias=True,
+            qk_scale=None,
+            patch_norm=True,
+            drop_rate=0.,
+            attn_drop_rate=0.,
+            drop_path_rate=0.1,
+            use_abs_pos_embed=False,
+            act_cfg=dict(type='GELU'),
+            norm_cfg=dict(type='LN'),
+            with_cp=False,
+            pretrained=None,
+            convert_weights=False,
+            frozen_stages=-1,
+            init_cfg=None):
         self.convert_weights = convert_weights
         self.frozen_stages = frozen_stages
         if isinstance(pretrain_img_size, int):
@@ -633,7 +637,7 @@ class SwinTransformer(BaseModule):
             if downsample:
                 in_channels = downsample.out_channels
 
-        self.num_features = [int(embed_dims * 2**i) for i in range(num_layers)]
+        self.num_features = [int(embed_dims * 2 ** i) for i in range(num_layers)]
         # Add a norm layer for each output
         for i in out_indices:
             layer = build_norm_layer(norm_cfg, self.num_features[i])[1]
@@ -657,7 +661,7 @@ class SwinTransformer(BaseModule):
         for i in range(1, self.frozen_stages + 1):
 
             if (i - 1) in self.out_indices:
-                norm_layer = getattr(self, f'norm{i-1}')
+                norm_layer = getattr(self, f'norm{i - 1}')
                 norm_layer.eval()
                 for param in norm_layer.parameters():
                     param.requires_grad = False
@@ -730,8 +734,8 @@ class SwinTransformer(BaseModule):
                 if nH1 != nH2:
                     logger.warning(f'Error in loading {table_key}, pass')
                 elif L1 != L2:
-                    S1 = int(L1**0.5)
-                    S2 = int(L2**0.5)
+                    S1 = int(L1 ** 0.5)
+                    S2 = int(L2 ** 0.5)
                     table_pretrained_resized = F.interpolate(
                         table_pretrained.permute(1, 0).reshape(1, nH1, S1, S1),
                         size=(S2, S2),

@@ -21,11 +21,12 @@ class RPNHead(AnchorHead):
         num_convs (int): Number of convolution layers in the head. Default 1.
     """  # noqa: W605
 
-    def __init__(self,
-                 in_channels,
-                 init_cfg=dict(type='Normal', layer='Conv2d', std=0.01),
-                 num_convs=1,
-                 **kwargs):
+    def __init__(
+            self,
+            in_channels,
+            init_cfg=dict(type='Normal', layer='Conv2d', std=0.01),
+            num_convs=1,
+            **kwargs):
         self.num_convs = num_convs
         super(RPNHead, self).__init__(
             1, in_channels, init_cfg=init_cfg, **kwargs)
@@ -53,11 +54,13 @@ class RPNHead(AnchorHead):
         else:
             self.rpn_conv = nn.Conv2d(
                 self.in_channels, self.feat_channels, 3, padding=1)
-        self.rpn_cls = nn.Conv2d(self.feat_channels,
-                                 self.num_base_priors * self.cls_out_channels,
-                                 1)
-        self.rpn_reg = nn.Conv2d(self.feat_channels, self.num_base_priors * 4,
-                                 1)
+        self.rpn_cls = nn.Conv2d(
+            self.feat_channels,
+            self.num_base_priors * self.cls_out_channels,
+            1)
+        self.rpn_reg = nn.Conv2d(
+            self.feat_channels, self.num_base_priors * 4,
+            1)
 
     def forward_single(self, x):
         """Forward feature map of a single scale level."""
@@ -67,12 +70,13 @@ class RPNHead(AnchorHead):
         rpn_bbox_pred = self.rpn_reg(x)
         return rpn_cls_score, rpn_bbox_pred
 
-    def loss(self,
-             cls_scores,
-             bbox_preds,
-             gt_bboxes,
-             img_metas,
-             gt_bboxes_ignore=None):
+    def loss(
+            self,
+            cls_scores,
+            bbox_preds,
+            gt_bboxes,
+            img_metas,
+            gt_bboxes_ignore=None):
         """Compute losses of the head.
 
         Args:
@@ -100,16 +104,17 @@ class RPNHead(AnchorHead):
         return dict(
             loss_rpn_cls=losses['loss_cls'], loss_rpn_bbox=losses['loss_bbox'])
 
-    def _get_bboxes_single(self,
-                           cls_score_list,
-                           bbox_pred_list,
-                           score_factor_list,
-                           mlvl_anchors,
-                           img_meta,
-                           cfg,
-                           rescale=False,
-                           with_nms=True,
-                           **kwargs):
+    def _get_bboxes_single(
+            self,
+            cls_score_list,
+            bbox_pred_list,
+            score_factor_list,
+            mlvl_anchors,
+            img_meta,
+            cfg,
+            rescale=False,
+            with_nms=True,
+            **kwargs):
         """Transform outputs of a single image into bbox predictions.
 
         Args:
@@ -178,16 +183,18 @@ class RPNHead(AnchorHead):
             mlvl_bbox_preds.append(rpn_bbox_pred)
             mlvl_valid_anchors.append(anchors)
             level_ids.append(
-                scores.new_full((scores.size(0), ),
+                scores.new_full((scores.size(0),),
                                 level_idx,
                                 dtype=torch.long))
 
-        return self._bbox_post_process(mlvl_scores, mlvl_bbox_preds,
-                                       mlvl_valid_anchors, level_ids, cfg,
-                                       img_shape)
+        return self._bbox_post_process(
+            mlvl_scores, mlvl_bbox_preds,
+            mlvl_valid_anchors, level_ids, cfg,
+            img_shape)
 
-    def _bbox_post_process(self, mlvl_scores, mlvl_bboxes, mlvl_valid_anchors,
-                           level_ids, cfg, img_shape, **kwargs):
+    def _bbox_post_process(
+            self, mlvl_scores, mlvl_bboxes, mlvl_valid_anchors,
+            level_ids, cfg, img_shape, **kwargs):
         """bbox post-processing method.
 
         Do the nms operation for bboxes in same level.
@@ -257,9 +264,10 @@ class RPNHead(AnchorHead):
         nms_pre = cfg.get('deploy_nms_pre', -1)
         # Different from the normal forward doing NMS level by level,
         # we do NMS across all levels when exporting ONNX.
-        dets, _ = add_dummy_nms_for_onnx(batch_bboxes, batch_scores,
-                                         cfg.max_per_img,
-                                         cfg.nms.iou_threshold,
-                                         score_threshold, nms_pre,
-                                         cfg.max_per_img)
+        dets, _ = add_dummy_nms_for_onnx(
+            batch_bboxes, batch_scores,
+            cfg.max_per_img,
+            cfg.nms.iou_threshold,
+            score_threshold, nms_pre,
+            cfg.max_per_img)
         return dets

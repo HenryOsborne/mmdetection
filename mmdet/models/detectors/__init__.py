@@ -47,6 +47,11 @@ from .yolox import YOLOX
 
 from .faster_rcnn_ssp import FasterSSPNet
 from .ddod_ssp import DDODSPP
+from .faster_rcnn_ssp1 import FasterSSPNet1
+from .kd_two_stage import KnowledgeDistillationTwoStageDetector
+from .fgfi_two_stage import FGFI_TwoStageDetector
+from .fgd_two_stage import FGD_TwoStageDetector
+from .fkd_two_stage import FKD_TwoStageDetector
 
 __all__ = [
     'ATSS', 'BaseDetector', 'SingleStageDetector', 'TwoStageDetector', 'RPN',
@@ -59,5 +64,5 @@ __all__ = [
     'TwoStagePanopticSegmentor', 'PanopticFPN', 'QueryInst', 'LAD', 'TOOD',
     'MaskFormer', 'DDOD', 'Mask2Former',
 
-    'FasterSSPNet', 'DDODSPP'
+    'FasterSSPNet', 'DDODSPP', 'FasterSSPNet1', 'FGFI_TwoStageDetector', 'FGD_TwoStageDetector', 'FKD_TwoStageDetector'
 ]

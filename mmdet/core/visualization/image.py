@@ -296,18 +296,35 @@ def imshow_det_bboxes(img,
     text_palette = palette_val(get_palette(text_color, max_label + 1))
     text_colors = [text_palette[label] for label in labels]
 
+    # level = [0, 0, 0]
     num_bboxes = 0
     if bboxes is not None:
         num_bboxes = bboxes.shape[0]
         bbox_palette = palette_val(get_palette(bbox_color, max_label + 1))
         colors = [bbox_palette[label] for label in labels[:num_bboxes]]
         # ==============================================================================
-        area = (bboxes[:, 3] - bboxes[:, 1]) * (bboxes[:, 2] - bboxes[:, 0])
-        mask = area > 96 * 96
-        area = area[mask]
-        bboxes = bboxes[mask]
-        if len(bboxes) == 0:
-            return
+        # new_bboxes = bboxes.copy()
+        # height_factor = 800 / height
+        # width_factor = 800 / width
+        # new_bboxes[:, 1] = new_bboxes[:, 1] * height_factor
+        # new_bboxes[:, 3] = new_bboxes[:, 3] * height_factor
+        # new_bboxes[:, 0] = new_bboxes[:, 0] * width_factor
+        # new_bboxes[:, 2] = new_bboxes[:, 2] * width_factor
+        # # area = (bboxes[:, 3] - bboxes[:, 1]) * (bboxes[:, 2] - bboxes[:, 0])
+        # area = (new_bboxes[:, 3] - new_bboxes[:, 1]) * (new_bboxes[:, 2] - new_bboxes[:, 0])
+        # for i in area:
+        #     if i <= 32. * 32.:
+        #         level[0] += 1
+        #     elif 32. * 32. < i <= 96. * 96.:
+        #         level[1] += 1
+        #     elif i > 96. * 96.:
+        #         level[2] += 1
+
+        # mask = area > 96 * 96
+        # area = area[mask]
+        # bboxes = bboxes[mask]
+        # if len(bboxes) == 0:
+        #     return
         # ==============================================================================
         draw_bboxes(ax, bboxes, colors, alpha=0.8, thickness=thickness)
 
@@ -316,16 +333,17 @@ def imshow_det_bboxes(img,
         areas = (bboxes[:, 3] - bboxes[:, 1]) * (bboxes[:, 2] - bboxes[:, 0])
         scales = _get_adaptive_scales(areas)
         scores = bboxes[:, 4] if bboxes.shape[1] == 5 else None
-        # draw_labels(
-        #     ax,
-        #     labels[:num_bboxes],
-        #     positions,
-        #     scores=scores,
-        #     class_names=class_names,
-        #     color=text_colors,
-        #     font_size=font_size,
-        #     scales=scales,
-        #     horizontal_alignment=horizontal_alignment)
+        class_names = ('building',)
+        draw_labels(
+            ax,
+            labels[:num_bboxes],
+            positions,
+            scores=scores,
+            class_names=class_names,
+            color=text_colors,
+            font_size=font_size,
+            scales=scales,
+            horizontal_alignment=horizontal_alignment)
 
     if segms is not None:
         mask_palette = get_palette(mask_color, max_label + 1)

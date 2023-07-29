@@ -3,6 +3,7 @@ data_root = 'data/xview/'
 work_dir = './work_dirs/tmp/faster_convnext_fpn_xview.py'
 img_scale = (800, 800)
 num_classes = 1
+num_proposal = 10000
 
 model = dict(
     type='FasterRCNN',
@@ -95,9 +96,9 @@ model = dict(
             pos_weight=-1,
             debug=False),
         rpn_proposal=dict(
-            nms_pre=10000,
-            nms_post=10000,
-            max_per_img=10000,
+            nms_pre=num_proposal,
+            nms_post=num_proposal,
+            max_per_img=num_proposal,
             nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
         rcnn=dict(
@@ -119,14 +120,14 @@ model = dict(
             alpha=0.25)),
     test_cfg=dict(
         rpn=dict(
-            nms_pre=10000,
-            nms_post=10000,
-            max_per_img=10000,
+            nms_pre=num_proposal,
+            nms_post=num_proposal,
+            max_per_img=num_proposal,
             nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
         rcnn=dict(
             # score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=2000)
-            score_thr=0.3, nms=dict(type='nms', iou_threshold=0.2), max_per_img=10000)
+            score_thr=0.3, nms=dict(type='nms', iou_threshold=0.2), max_per_img=num_proposal)
         # score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.15, min_score=0.3) , max_per_img=2000)
         # soft-nms is also supported for rcnn testing
         # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)

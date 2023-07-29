@@ -36,7 +36,9 @@ class Heatmap:
         elif lvl == 3 and area > max_area:  # scale out of range  marked as 1
             return 1
         else:
-            return -1  # once the object can not be matched in i-th layer, it will be treated as background  marked as -1
+            return -1
+            # 一旦物体不能被第i层匹配到，则将其视作背景，用-1表示
+            # once the object can not be matched in i-th layer, it will be treated as background  marked as -1
 
     def seg_loss(self, pred, target, mask):
         # dice loss
@@ -136,6 +138,7 @@ class Heatmap:
         selected_reg_masks, selected_seg_masks = self.mask_batch(pred, gt)
         selected_reg_masks = selected_reg_masks.to(pred.device)
         selected_seg_masks = selected_seg_masks.to(pred.device)
+        count_bg = len(gt[gt <= 0])
         gt[gt < 0] = 0
         loss_reg = self.reg_loss(pred, gt, selected_reg_masks)
         loss_seg = self.seg_loss(pred, gt, selected_seg_masks)
@@ -150,22 +153,22 @@ class Heatmap:
         for ann in anns:
             x1, y1, x2, y2 = ann
 
-            l = np.int(x1)
-            t = np.int(y1)
+            left = np.int(x1)
+            top = np.int(y1)
 
-            r = int(np.clip(np.ceil(x2), a_min=0, a_max=img_w - 1))
-            d = int(np.clip(np.ceil(y2), a_min=0, a_max=img_h - 1))
+            right = int(np.clip(np.ceil(x2), a_min=0, a_max=img_w - 1))
+            down = int(np.clip(np.ceil(y2), a_min=0, a_max=img_h - 1))
 
-            w = r - l
-            h = d - t
+            w = right - left
+            h = down - top
 
             value = self.get_bbox_mask(np.sqrt(w * h), lvl)
-            gt_mp[t:d, l:r] = value
+            gt_mp[top:down, left:right] = value
 
         # ----------------------------------------------------------------------------------------
         draw_label = False
         if draw_label is True:
-            work_dir = 'work_dirs/ABFN/ABFN_sacle_label/supervised_heatmap'
+            work_dir = 'work_dirs/tmp'
             os.makedirs(work_dir, exist_ok=True)
             sub_dir = os.path.join(work_dir, filename.split('.')[0])
             os.makedirs(sub_dir, exist_ok=True)
